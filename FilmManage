@@ -1,0 +1,358 @@
+package main
+
+import "fmt"
+
+const NMAX int = 100
+
+type Film struct {
+	Judul  string
+	Genre  string
+	Rating float64
+	Status bool
+}
+
+type tabFilm [NMAX]Film
+
+var daftarFilm tabFilm
+var jumlahFilm int = 0
+
+func main() {
+	var pilihan int
+	pilihan = -1
+
+	for pilihan != 0 {
+		fmt.Println("\n---MANAGEMENT SYSTEM FILM---")
+		fmt.Println("1. Add Film")
+		fmt.Println("2. Show All Films")
+		fmt.Println("3. Find Film")
+		fmt.Println("4. Edit Film")
+		fmt.Println("5. Delete Film")
+		fmt.Println("0. Exit Program")
+		fmt.Print("\nChoose Menu: ")
+		fmt.Scan(&pilihan)
+
+		if pilihan == 1 {
+			addFilm()
+		} else if pilihan == 2 {
+			showFilmMenu()
+		} else if pilihan == 3 {
+			findFilmMenu()
+		} else if pilihan == 4 {
+			editFilm()
+		} else if pilihan == 5 {
+			deleteFilm()
+		} else if pilihan == 0 {
+			fmt.Println("\n Thank you for using Film Management System!")
+		} else {
+			fmt.Println("\nInvalid choice! Please choose 0-5.")
+		}
+	}
+}
+
+func addFilm() {
+	if jumlahFilm < NMAX {
+		fmt.Print("Title: ")
+		fmt.Scan(&daftarFilm[jumlahFilm].Judul)
+		fmt.Print("Genre: ")
+		fmt.Scan(&daftarFilm[jumlahFilm].Genre)
+		fmt.Print("Rating (0-10): ")
+		fmt.Scan(&daftarFilm[jumlahFilm].Rating)
+		daftarFilm[jumlahFilm].Status = false
+		jumlahFilm++
+		fmt.Println("Film added successfully!")
+	} else {
+		fmt.Println("Maximum capacity reached! Cannot add more films.")
+	}
+}
+
+func showFilmMenu() {
+	if jumlahFilm == 0 {
+		fmt.Println("\n No films in database yet!")
+		return
+	}
+
+	fmt.Println("1. Sort by Rating (Highest to Lowest)")
+	fmt.Println("2. Sort by Rating (Lowest to Highest)")
+	fmt.Println("3. Sort by Title (A to Z)")
+	fmt.Println("4. Sort by Title (Z to A)")
+	fmt.Print("Choose sorting method: ")
+
+	var choice int
+	fmt.Scan(&choice)
+
+	if choice == 1 {
+		selectionSortRatingDesc()
+		tampilkanDaftar()
+	} else if choice == 2 {
+		selectionSortRatingAsc()
+		tampilkanDaftar()
+	} else if choice == 3 {
+		insertionSortTitleAsc()
+		tampilkanDaftar()
+	} else if choice == 4 {
+		insertionSortTitleDesc()
+		tampilkanDaftar()
+	} else {
+		fmt.Println("Invalid choice!")
+	}
+}
+
+func selectionSortRatingDesc() {
+	var i, j, idxMax int
+	var temp Film
+	i = 0
+	for i < jumlahFilm-1 {
+		idxMax = i
+		j = i + 1
+		for j < jumlahFilm {
+			if daftarFilm[j].Rating > daftarFilm[idxMax].Rating {
+				idxMax = j
+			}
+			j++
+		}
+		temp = daftarFilm[idxMax]
+		daftarFilm[idxMax] = daftarFilm[i]
+		daftarFilm[i] = temp
+		i++
+	}
+}
+
+func selectionSortRatingAsc() {
+	var i, j, idxMax int
+	var temp Film
+	i = 0
+	for i < jumlahFilm-1 {
+		idxMax = i
+		j = i + 1
+		for j < jumlahFilm {
+			if daftarFilm[j].Rating < daftarFilm[idxMax].Rating {
+				idxMax = j
+			}
+			j++
+		}
+		temp = daftarFilm[idxMax]
+		daftarFilm[idxMax] = daftarFilm[i]
+		daftarFilm[i] = temp
+		i++
+	}
+}
+
+func insertionSortTitleAsc() {
+	var i, j int
+	var temp Film
+	i = 1
+	for i < jumlahFilm {
+		temp = daftarFilm[i]
+		j = i - 1
+
+		for j >= 0 && daftarFilm[j].Judul > temp.Judul {
+			daftarFilm[j+1] = daftarFilm[j] // Shift right
+			j--
+		}
+		daftarFilm[j+1] = temp
+		i++
+	}
+}
+
+func insertionSortTitleDesc() {
+	var i, j int
+	var temp Film
+	i = 1
+	for i < jumlahFilm {
+		temp = daftarFilm[i]
+		j = i - 1
+
+		for j >= 0 && daftarFilm[j].Judul < temp.Judul {
+			daftarFilm[j+1] = daftarFilm[j] // Shift right
+			j--
+		}
+		daftarFilm[j+1] = temp
+		i++
+	}
+}
+
+func findFilmMenu() {
+	if jumlahFilm == 0 {
+		fmt.Println("\nNo films in database yet!")
+		return
+	}
+
+	fmt.Println("\n--- SEARCH OPTIONS ---")
+	fmt.Println("1. Search by Genre")
+	fmt.Println("2. Search by Exact Title")
+	fmt.Print("Choose search method: ")
+
+	var choice int
+	fmt.Scan(&choice)
+
+	if choice == 1 {
+		sequentialSearchGenre()
+	} else if choice == 2 {
+		binarySearchTitle()
+	} else {
+		fmt.Println("Invalid choice!")
+	}
+}
+
+func sequentialSearchGenre() {
+	var keyword string
+	var i int
+	var found bool
+
+	fmt.Print("\nEnter genre to search: ")
+	fmt.Scan(&keyword)
+
+	i = 0
+	found = false
+	fmt.Printf("\n--- Films with genre '%s' ---\n", keyword)
+	for i < jumlahFilm {
+		if daftarFilm[i].Genre == keyword {
+			fmt.Printf("%d. %s - Rating: %.1f [%s]\n",
+				i+1,
+				daftarFilm[i].Judul,
+				daftarFilm[i].Rating,
+				getStatus(daftarFilm[i].Status))
+			found = true
+		}
+		i++
+	}
+	if !found {
+		fmt.Println("No films found with that genre.")
+	}
+}
+
+func binarySearchTitle() {
+	var keyword string
+	var left, right, mid int
+	var found bool
+
+	fmt.Println("\n(Sorting data by title first...)")
+	insertionSortTitleAsc()
+
+	fmt.Print("Enter exact film title: ")
+	fmt.Scan(&keyword)
+
+	left = 0
+	right = jumlahFilm - 1
+	found = false
+
+	for left <= right && !found {
+		// Find the middle point
+		mid = (left + right) / 2
+
+		// Check if we found it!
+		if daftarFilm[mid].Judul == keyword {
+			fmt.Println("\nFilm found!")
+			fmt.Printf("Title: %s\n", daftarFilm[mid].Judul)
+			fmt.Printf("Genre: %s\n", daftarFilm[mid].Genre)
+			fmt.Printf("Rating: %.1f\n", daftarFilm[mid].Rating)
+			fmt.Printf("Status: %s\n", getStatus(daftarFilm[mid].Status))
+			found = true
+		} else if keyword < daftarFilm[mid].Judul {
+			right = mid - 1
+		} else {
+			left = mid + 1
+		}
+	}
+
+	if !found {
+		fmt.Println("Film not found with that exact title.")
+	}
+}
+
+func editFilm() {
+	if jumlahFilm == 0 {
+		fmt.Println("\nNo films to edit!")
+		return
+	}
+	tampilkanDaftar()
+
+	var num int
+	fmt.Printf("\nEnter film number to edit (1-%d): ", jumlahFilm)
+	fmt.Scan(&num)
+
+	var idx int
+	idx = num - 1
+
+	if idx >= 0 && idx < jumlahFilm {
+		fmt.Println("\n--- EDITING FILM ---")
+		fmt.Printf("Current: %s (%s) - Rating: %.1f\n", daftarFilm[idx].Judul, daftarFilm[idx].Genre, daftarFilm[idx].Rating)
+		fmt.Print("\nNew Title: ")
+		fmt.Scan(&daftarFilm[idx].Judul)
+		fmt.Print("New Genre: ")
+		fmt.Scan(&daftarFilm[idx].Genre)
+		fmt.Print("New Rating (0-10): ")
+		fmt.Scan(&daftarFilm[idx].Rating)
+		fmt.Print("Watched? (1=Yes, 0=No): ")
+		var statusInput int
+		fmt.Scan(&statusInput)
+		daftarFilm[idx].Status = (statusInput == 1)
+
+		fmt.Println("Film updated successfully!")
+	} else {
+		fmt.Println("Invalid film number!")
+	}
+}
+
+func deleteFilm() {
+	if jumlahFilm == 0 {
+		fmt.Println("\nNo films to delete!")
+		return
+	}
+
+	tampilkanDaftar()
+
+	var num int
+	fmt.Printf("\nEnter film number to delete (1- %d): ", jumlahFilm)
+	fmt.Scan(&num)
+
+	var idx int
+	idx = num - 1
+
+	if idx >= 0 && idx < jumlahFilm {
+		// Save the title before deleting (for confirmation message)
+		var deletedTitle string
+		deletedTitle = daftarFilm[idx].Judul
+
+		// Shift all elements after the deleted one to the left
+		// Like removing a book from a shelf and moving others to fill the gap
+		var i int
+		i = idx
+		for i < jumlahFilm-1 {
+			daftarFilm[i] = daftarFilm[i+1]
+			i++
+		}
+
+		// Decrease the count
+		jumlahFilm--
+
+		fmt.Printf("Film '%s' deleted successfully!\n", deletedTitle)
+	} else {
+		fmt.Println("Invalid film number!")
+	}
+}
+
+func tampilkanDaftar() {
+	var i int
+	if jumlahFilm == 0 {
+		fmt.Println("(Empty - No films yet)")
+		return
+	}
+
+	i = 0
+	for i < jumlahFilm {
+		fmt.Printf("%d. [%s] %s\n",
+			i+1,
+			getStatus(daftarFilm[i].Status),
+			daftarFilm[i].Judul)
+		fmt.Printf("Genre: %s | Rating: %.1f/10\n", daftarFilm[i].Genre, daftarFilm[i].Rating)
+		i++
+	}
+}
+
+func getStatus(watched bool) string {
+	if watched {
+		return "Watched"
+	}
+	return "Not Watched"
+}
